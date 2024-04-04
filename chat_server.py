@@ -13,13 +13,13 @@ class ChatServer:
 
     def handle_client(self, client_socket, addr):
         print(f"Conexão estabelecida com {addr}")
+        exit_username = None
         try:
             while True:
                 message = client_socket.recv(1024).decode('utf-8')
                 if not message:
                     break
                 print(f"Mensagem de {addr}: {message}")
-                
                 if message.startswith("/exit"):
                     exit_username = message.split()[1]
                     self.broadcast(f"{exit_username} saiu do chat")
@@ -32,7 +32,10 @@ class ChatServer:
 
         finally:
             client_socket.close()
-            print(f"Conexão encerrada com {addr}+{exit_username}")
+            if exit_username:
+                print(f"Conexão encerrada com {addr} :( {exit_username}")
+            else:
+                print(f"Conexão encerrada com {addr}")
 
     def broadcast(self, message):
         for client in self.clients:
@@ -42,10 +45,16 @@ class ChatServer:
                 print(f"Erro ao enviar mensagem para cliente: {e}")
         self.clients = [client for client in self.clients if client.fileno() != -1]
 
+    def notify_new_user(self, username):
+        message = f"{username} entrou no chat"
+        self.broadcast(message)
+
     def start(self):
         while True:
             client_socket, addr = self.server_socket.accept()
             self.clients.append(client_socket)
+            username = client_socket.recv(1024).decode('utf-8')
+            self.notify_new_user(username)
             client_thread = threading.Thread(target=self.handle_client, args=(client_socket, addr))
             client_thread.start()
 
