@@ -1,6 +1,6 @@
 import socket
 import threading
-
+#test comit
 class ChatServer:
     def __init__(self, host, port):
         self.host = host
@@ -13,13 +13,14 @@ class ChatServer:
 
     def handle_client(self, client_socket, addr):
         print(f"Conexão estabelecida com {addr}")
+        
         try:
+            
             while True:
                 message = client_socket.recv(1024).decode('utf-8')
                 if not message:
                     break
                 print(f"Mensagem de {addr}: {message}")
-                
                 if message.startswith("/exit"):
                     exit_username = message.split()[1]
                     self.broadcast(f"{exit_username} saiu do chat")
@@ -32,7 +33,7 @@ class ChatServer:
 
         finally:
             client_socket.close()
-            print(f"Conexão encerrada com {addr}+{exit_username}")
+            print(f"Conexão encerrada com {addr} :( {exit_username}")
 
     def broadcast(self, message):
         for client in self.clients:
@@ -46,6 +47,8 @@ class ChatServer:
         while True:
             client_socket, addr = self.server_socket.accept()
             self.clients.append(client_socket)
+            username = client_socket.recv(1024).decode('utf-8')
+            self.broadcast(f"{username} entrou no chat")
             client_thread = threading.Thread(target=self.handle_client, args=(client_socket, addr))
             client_thread.start()
 
